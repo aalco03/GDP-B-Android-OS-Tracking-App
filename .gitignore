@@ -1,0 +1,76 @@
+# Gradle files
+.gradle/
+build/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Android Studio generated files and folders
+*.iml
+.idea/
+.DS_Store
+capture/
+.externalNativeBuild
+.cxx/
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Android Profiling
+*.hprof
+
+# IntelliJ
+*.iws
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/modules.xml
+.idea/*.iml
+.idea/modules
+*.iml
+*.ipr
+
+# Generated files
+bin/
+gen/
+out/
+release/
+
+# Gradle
+.gradle
+gradlew
+gradlew.bat
+gradle/wrapper/gradle-wrapper.jar
+
+# Local development
+*.log
+*.nav
+*.snm
+*.toc
+*.vrb
+*.fls
+*.fdb_latexmk
+*.bak
+*.swp
+*.tmp
+
+# OS generated files
+.DS_Store*
+ehthumbs.db
+Thumbs.db
+
+# Test files
+*.ap_
+*.dex

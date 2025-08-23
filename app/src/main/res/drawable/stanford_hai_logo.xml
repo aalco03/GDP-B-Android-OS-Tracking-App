@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    
+    <!-- Background circle -->
+    <path
+        android:fillColor="#8C1515"
+        android:pathData="M60,60m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0" />
+    
+    <!-- Stanford text -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,45 L40,45 L40,75 L30,75 Z M50,45 L60,45 L60,75 L50,75 Z M70,45 L80,45 L80,75 L70,75 Z M90,45 L100,45 L100,75 L90,75 Z" />
+    
+    <!-- HAI text -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,85 L45,85 L45,95 L35,95 Z M55,85 L65,85 L65,95 L55,95 Z M75,85 L85,85 L85,95 L75,95 Z" />
+    
+</vector>

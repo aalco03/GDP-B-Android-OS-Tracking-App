@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Stanford HAI Study</string>
+    <string name="app_description">Research app for studying human-computer interaction patterns</string>
+</resources>
