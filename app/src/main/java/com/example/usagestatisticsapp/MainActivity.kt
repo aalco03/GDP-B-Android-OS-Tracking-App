@@ -3,6 +3,7 @@ package com.example.usagestatisticsapp
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -12,19 +13,22 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.example.usagestatisticsapp.data.AppDatabase
 import com.example.usagestatisticsapp.data.UserProfileRepository
 import com.example.usagestatisticsapp.data.UserUsageStatsRepository
 import com.example.usagestatisticsapp.data.MasterUsageStatsRepository
+import com.example.usagestatisticsapp.network.SyncService
+import com.example.usagestatisticsapp.network.SyncStatus
 import com.example.usagestatisticsapp.ui.UserSetupScreen
 import com.example.usagestatisticsapp.ui.UserManagementViewModel
 import com.example.usagestatisticsapp.ui.MainScreen
 import com.example.usagestatisticsapp.ui.theme.UsageStatisticsAppTheme
-import androidx.compose.ui.unit.dp
 import android.net.Uri
 import androidx.activity.result.contract.ActivityResultContracts
-
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     
@@ -52,6 +56,81 @@ class MainActivity : ComponentActivity() {
         }
     }
     
+    // Initialize SyncService
+    private lateinit var syncService: SyncService
+    private var syncStatus by mutableStateOf(SyncStatus(false, null, null, false))
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // Initialize SyncService with repository
+        val database = AppDatabase.getDatabase(applicationContext)
+        val userUsageStatsRepository = UserUsageStatsRepository(database.userUsageStatsDao())
+        syncService = SyncService(applicationContext, userUsageStatsRepository)
+        
+        // Initialize sync status
+        syncStatus = syncService.getSyncStatus()
+        
+        enableEdgeToEdge()
+        setContent {
+            UsageStatisticsAppTheme {
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    MultiTenantUsageStatsApp(
+                        modifier = Modifier.padding(innerPadding),
+                        userManagementViewModel = userManagementViewModel,
+                        syncStatus = syncStatus,
+                        onOpenSettings = { openUsageAccessSettings() },
+                        onShareFile = { uri, mimeType, fileName -> shareFile(uri, mimeType, fileName) },
+                        onSetStudyId = { studyId -> handleSetStudyId(studyId) },
+                        onClearStudyId = { handleClearStudyId() },
+                        onSync = { handleSync() },
+                        onConnectivityCheck = { handleConnectivityCheck() }
+                    )
+                }
+            }
+        }
+    }
+    
+    private fun handleSetStudyId(studyId: String) {
+        val result = syncService.setStudyId(studyId)
+        result.onSuccess {
+            syncStatus = syncService.getSyncStatus()
+            Toast.makeText(this, "Study ID set successfully! You can now start tracking.", Toast.LENGTH_SHORT).show()
+        }.onFailure { error ->
+            Toast.makeText(this, "Failed to set Study ID: ${error.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    private fun handleClearStudyId() {
+        syncService.clearStudyId()
+        syncStatus = syncService.getSyncStatus()
+        Toast.makeText(this, "Study ID cleared", Toast.LENGTH_SHORT).show()
+    }
+    
+    private fun handleSync() {
+        lifecycleScope.launch {
+            val result = syncService.syncUsageData()
+            result.onSuccess { recordCount ->
+                syncStatus = syncService.getSyncStatus()
+                Toast.makeText(this@MainActivity, "Synced $recordCount records successfully!", Toast.LENGTH_SHORT).show()
+            }.onFailure { error ->
+                Toast.makeText(this@MainActivity, "Sync failed: ${error.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+    
+    private fun handleConnectivityCheck() {
+        lifecycleScope.launch {
+            val result = syncService.checkConnectivity()
+            result.onSuccess { isConnected ->
+                val message = if (isConnected) "Backend is reachable!" else "Backend is not reachable"
+                Toast.makeText(this@MainActivity, message, Toast.LENGTH_SHORT).show()
+            }.onFailure { error ->
+                Toast.makeText(this@MainActivity, "Connection test failed: ${error.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+    
     private fun openUsageAccessSettings() {
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
         startActivity(intent)
@@ -68,23 +147,6 @@ class MainActivity : ComponentActivity() {
         exportLauncher.launch(Intent.createChooser(intent, "Share Data Export"))
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            UsageStatisticsAppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MultiTenantUsageStatsApp(
-                        modifier = Modifier.padding(innerPadding),
-                        userManagementViewModel = userManagementViewModel,
-                        onOpenSettings = { openUsageAccessSettings() },
-                        onShareFile = { uri, mimeType, fileName -> shareFile(uri, mimeType, fileName) }
-                    )
-                }
-            }
-        }
-    }
-    
     override fun onDestroy() {
         super.onDestroy()
         userManagementViewModel.endSession()
@@ -95,8 +157,13 @@ class MainActivity : ComponentActivity() {
 fun MultiTenantUsageStatsApp(
     modifier: Modifier = Modifier,
     userManagementViewModel: UserManagementViewModel,
+    syncStatus: SyncStatus,
     onOpenSettings: () -> Unit,
-    onShareFile: (Uri, String, String) -> Unit
+    onShareFile: (Uri, String, String) -> Unit,
+    onSetStudyId: (String) -> Unit,
+    onClearStudyId: () -> Unit,
+    onSync: () -> Unit,
+    onConnectivityCheck: () -> Unit
 ) {
     val userSetupState by userManagementViewModel.userSetupState.collectAsStateWithLifecycle()
     val userProfile by userManagementViewModel.userProfile.collectAsStateWithLifecycle()
@@ -139,6 +206,11 @@ fun MultiTenantUsageStatsApp(
                     onError = { error -> /* Handle error */ }
                 )
             },
+            onSetStudyId = onSetStudyId,
+            onClearStudyId = onClearStudyId,
+            onSync = onSync,
+            onConnectivityCheck = onConnectivityCheck,
+            syncStatus = syncStatus,
             modifier = modifier
         )
     }
