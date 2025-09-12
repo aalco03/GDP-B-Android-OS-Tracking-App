@@ -1,6 +1,19 @@
 # Project GDP-B Usage Statistics Android OS Application
 
 This mobile application was built with the purpose of collecting granular user data to assess the impact and relevance that digital goods have on our evaluation of the economy. With user consent, a cohort of participants will be assembled, and their usage data will be collected in an attempt to better understand their behavior and the value they place upon distinct digital technologies. The development of this app falls under the Stanford Digital Economy Lab's GDP-B project, which seeks to establish a new method of economic assessment that considers the enormous effects of contemporary technologies that are often not factored into economic change, or done so ineffectively.
+## App Screenshots
+<div algin="center">
+   <img src="screenshots/NonTrackingScreen.png" alt="Screenshot 1">
+   <img src="screenshots/TrackingScreen.png" alt="Screenshot 2">
+</div>
+
+*User can toggle between tracking and non-tracking mode for full autonomy.*
+
+<div algin="center">
+   <img src="screenshots/SuccessfulDataSync.png" alt="Screenshot 3">
+   <img src="screenshots/SuccessfulBackendConnection.png" alt="Screenshot 4">
+</div>
+*Contains buttons to check connection to backend for proper data transfer, as well as an alert once a manual sync has been completed.*
 
 ## Features
 
