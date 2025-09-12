@@ -11,12 +11,12 @@ import java.util.concurrent.TimeUnit
  */
 object NetworkConfig {
     
-    // Backend URL - change this to your deployed backend URL when ready
-    private const val BASE_URL = "http://10.0.2.2:8080/" // Android emulator localhost
-    // For physical device, use: "http://YOUR_COMPUTER_IP:8080/"
+    // Backend URL - configure this for your deployment environment
+    private const val BASE_URL = BuildConfig.API_BASE_URL ?: "https://your-production-api.com/"
+    // Note: Configure API_BASE_URL in build.gradle buildConfigField for different environments
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
     }
     
     private val okHttpClient = OkHttpClient.Builder()
@@ -45,15 +45,18 @@ class ApiRepository {
     /**
      * Submit usage data to backend without authentication (for study participants)
      */
-    suspend fun submitUsageDataAnonymous(
-        usageDataList: List<UsageDataRequest>
-    ): Result<List<UsageDataRequest>> {
+    suspend fun submitUsageDataAnonymous(usageDataList: List<UsageDataRequest>): Result<List<UsageDataRequest>> {
         return try {
             val response = apiService.submitUsageDataAnonymous(usageDataList)
             if (response.isSuccessful) {
-                Result.success(response.body() ?: emptyList())
+                val body = response.body()
+                if (body != null) {
+                    Result.success(body)
+                } else {
+                    Result.failure(Exception("Response body is null"))
+                }
             } else {
-                Result.failure(Exception("API Error: ${response.code()} ${response.message()}"))
+                Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -67,7 +70,12 @@ class ApiRepository {
         return try {
             val response = apiService.login(LoginRequest(username, password))
             if (response.isSuccessful) {
-                Result.success(response.body()!!)
+                val body = response.body()
+                if (body != null) {
+                    Result.success(body)
+                } else {
+                    Result.failure(Exception("Login response body is null"))
+                }
             } else {
                 Result.failure(Exception("Login failed: ${response.code()} ${response.message()}"))
             }
@@ -90,7 +98,12 @@ class ApiRepository {
             val signupRequest = SignupRequest(username, email, password, firstName, lastName)
             val response = apiService.register(signupRequest)
             if (response.isSuccessful) {
-                Result.success(response.body()!!)
+                val body = response.body()
+                if (body != null) {
+                    Result.success(body)
+                } else {
+                    Result.failure(Exception("Registration response body is null"))
+                }
             } else {
                 Result.failure(Exception("Registration failed: ${response.code()} ${response.message()}"))
             }
@@ -106,7 +119,12 @@ class ApiRepository {
         return try {
             val response = apiService.healthCheck()
             if (response.isSuccessful) {
-                Result.success(response.body()!!)
+                val body = response.body()
+                if (body != null) {
+                    Result.success(body)
+                } else {
+                    Result.failure(Exception("Health check response body is null"))
+                }
             } else {
                 Result.failure(Exception("Health check failed: ${response.code()}"))
             }

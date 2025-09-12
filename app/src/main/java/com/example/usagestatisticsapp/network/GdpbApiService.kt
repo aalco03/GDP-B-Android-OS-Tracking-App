@@ -20,10 +20,8 @@ interface GdpbApiService {
     /**
      * Submit usage data anonymously (for study participants)
      */
-    @POST("api/usage/submit-anonymous")
-    suspend fun submitUsageDataAnonymous(
-        @Body usageDataList: List<UsageDataRequest>
-    ): Response<List<UsageDataRequest>>
+    @POST("/api/usage/submit-anonymous")
+    suspend fun submitUsageDataAnonymous(@Body usageDataList: List<UsageDataRequest>): Response<List<UsageDataRequest>>
     
     /**
      * Get user's own usage data
@@ -47,7 +45,7 @@ interface GdpbApiService {
     /**
      * Health check endpoint
      */
-    @GET("actuator/health")
+    @GET("/actuator/health")
     suspend fun healthCheck(): Response<HealthResponse>
 }
 

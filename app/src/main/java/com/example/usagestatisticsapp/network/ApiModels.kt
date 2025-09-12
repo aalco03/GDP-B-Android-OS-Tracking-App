@@ -9,7 +9,7 @@ import java.time.LocalDateTime
  */
 data class UsageDataRequest(
     @SerializedName("tenantId")
-    val tenantId: String? = null, // Will be set by backend
+    val tenantId: String,
     
     @SerializedName("userId")
     val userId: Long? = null, // Will be set by backend
@@ -30,13 +30,13 @@ data class UsageDataRequest(
     val usageTimeMs: Long,
     
     @SerializedName("timestamp")
-    val timestamp: String, // ISO 8601 format
+    val timestamp: Array<Int>, // Backend returns [year, month, day, hour, minute]
     
     @SerializedName("lastTimeUsed")
-    val lastTimeUsed: String? = null,
+    val lastTimeUsed: Array<Int>? = null,
     
     @SerializedName("firstTimeStamp")
-    val firstTimeStamp: String? = null,
+    val firstTimeStamp: Array<Int>? = null,
     
     @SerializedName("launchCount")
     val launchCount: Int? = null,

@@ -18,7 +18,9 @@ import com.example.usagestatisticsapp.network.SyncStatus
 @Composable
 fun MainScreen(
     isTrackingEnabled: Boolean,
+    hasUsagePermission: Boolean,
     onTrackingToggle: () -> Unit,
+    onOpenSettings: () -> Unit,
     onExportJson: () -> Unit,
     onExportCsv: () -> Unit,
     onExportDatabase: () -> Unit,
@@ -40,6 +42,48 @@ fun MainScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
+        // Permission Status
+        if (!hasUsagePermission) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "⚠️ Permission Required",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    Text(
+                        text = "This app needs Usage Access permission to collect app usage statistics for the study.",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    Button(
+                        onClick = onOpenSettings,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Grant Usage Access Permission")
+                    }
+                }
+            }
+        }
+
         // Tracking Status
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -68,11 +112,21 @@ fun MainScreen(
                     modifier = Modifier.padding(bottom = 20.dp)
                 )
 
+                if (!hasUsagePermission) {
+                    Text(
+                        text = "Grant permission above to enable tracking",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                }
+
                 Button(
                     onClick = onTrackingToggle,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
+                    enabled = hasUsagePermission,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isTrackingEnabled)
                             MaterialTheme.colorScheme.error

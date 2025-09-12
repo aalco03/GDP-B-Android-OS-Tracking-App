@@ -2,7 +2,6 @@ package com.example.usagestatisticsapp.network
 
 import android.os.Build
 import com.example.usagestatisticsapp.data.UserUsageStats
-import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -10,22 +9,42 @@ import java.util.*
  */
 object DataMapper {
     
-    private val dateFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-    
     /**
      * Convert UserUsageStats to UsageDataRequest for API submission
      */
     fun toUsageDataRequest(userUsageStats: UserUsageStats, studyId: String): UsageDataRequest {
+        val startCal = Calendar.getInstance().apply { time = userUsageStats.startTime }
+        val endCal = Calendar.getInstance().apply { time = userUsageStats.endTime }
+        
+        val timestampArray = arrayOf(
+            startCal.get(Calendar.YEAR),
+            startCal.get(Calendar.MONTH) + 1, // Calendar.MONTH is 0-based
+            startCal.get(Calendar.DAY_OF_MONTH),
+            startCal.get(Calendar.HOUR_OF_DAY),
+            startCal.get(Calendar.MINUTE),
+            startCal.get(Calendar.SECOND)
+        )
+        
+        val lastUsedArray = arrayOf(
+            endCal.get(Calendar.YEAR),
+            endCal.get(Calendar.MONTH) + 1,
+            endCal.get(Calendar.DAY_OF_MONTH),
+            endCal.get(Calendar.HOUR_OF_DAY),
+            endCal.get(Calendar.MINUTE),
+            endCal.get(Calendar.SECOND)
+        )
+        
         return UsageDataRequest(
             tenantId = studyId, // Use Study ID as tenant identifier
+            userId = 1L, // Required for anonymous users
             deviceId = getDeviceId(),
             appPackageName = userUsageStats.appPackageName,
             appName = userUsageStats.appName,
             category = userUsageStats.appCategory,
             usageTimeMs = userUsageStats.duration,
-            timestamp = dateFormatter.format(userUsageStats.startTime),
-            lastTimeUsed = dateFormatter.format(userUsageStats.endTime),
-            firstTimeStamp = dateFormatter.format(userUsageStats.startTime),
+            timestamp = timestampArray,
+            lastTimeUsed = lastUsedArray,
+            firstTimeStamp = timestampArray,
             launchCount = userUsageStats.interactionCount,
             totalTimeInForeground = userUsageStats.duration,
             sessionId = userUsageStats.sessionId,
