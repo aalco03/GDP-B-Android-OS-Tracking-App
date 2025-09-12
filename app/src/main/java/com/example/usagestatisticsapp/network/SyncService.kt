@@ -85,16 +85,16 @@ class SyncService(
                     Log.i(TAG, "Repository not available, creating test data for sync")
                     val testData = createTestUsageData(studyId)
                     
-                    val result = apiRepository.submitUsageDataAnonymous(listOf(testData))
+                    val result = apiRepository.submitUsageDataWithStudyId(studyId, listOf(testData))
                     result.fold(
                         onSuccess = { 
                             // Update last sync timestamp
                             prefs.edit().putLong(PREF_LAST_SYNC, System.currentTimeMillis()).apply()
-                            Log.i(TAG, "Successfully synced test data")
+                            Log.i(TAG, "Successfully synced test data with Study ID: $studyId")
                             Result.success(1)
                         },
                         onFailure = { error ->
-                            Log.e(TAG, "Sync failed", error)
+                            Log.e(TAG, "Sync failed for Study ID: $studyId", error)
                             Result.failure(error)
                         }
                     )
@@ -110,16 +110,16 @@ class SyncService(
                             // Convert to API format and submit
                             val apiData = allUsageData.map { DataMapper.toUsageDataRequest(it, studyId) }
                             
-                            val result = apiRepository.submitUsageDataAnonymous(apiData)
+                            val result = apiRepository.submitUsageDataWithStudyId(studyId, apiData)
                             result.fold(
                                 onSuccess = { response ->
                                     // Update last sync timestamp
                                     prefs.edit().putLong(PREF_LAST_SYNC, System.currentTimeMillis()).apply()
-                                    Log.d(TAG, "Sync successful: ${response.size} records")
+                                    Log.d(TAG, "Sync successful for Study ID $studyId: ${response.size} records")
                                     Result.success(response.size)
                                 },
                                 onFailure = { error ->
-                                    Log.e(TAG, "Sync failed", error)
+                                    Log.e(TAG, "Sync failed for Study ID: $studyId", error)
                                     Result.failure(error)
                                 }
                             )
@@ -128,15 +128,15 @@ class SyncService(
                         Log.w(TAG, "Repository flow error, falling back to test data", flowException)
                         // Fallback to test data if repository fails
                         val testData = createTestUsageData(studyId)
-                        val result = apiRepository.submitUsageDataAnonymous(listOf(testData))
+                        val result = apiRepository.submitUsageDataWithStudyId(studyId, listOf(testData))
                         result.fold(
                             onSuccess = { 
                                 prefs.edit().putLong(PREF_LAST_SYNC, System.currentTimeMillis()).apply()
-                                Log.i(TAG, "Successfully synced fallback test data")
+                                Log.i(TAG, "Successfully synced fallback test data with Study ID: $studyId")
                                 Result.success(1)
                             },
                             onFailure = { error ->
-                                Log.e(TAG, "Fallback sync failed", error)
+                                Log.e(TAG, "Fallback sync failed for Study ID: $studyId", error)
                                 Result.failure(error)
                             }
                         )
@@ -166,7 +166,7 @@ class SyncService(
         
         return UsageDataRequest(
             tenantId = studyId,
-            userId = 1L, // Required field for anonymous users
+            userId = null, // Null for participant data - backend will assign participantId
             deviceId = "test-device-001",
             appPackageName = "com.example.test",
             appName = "Test App",

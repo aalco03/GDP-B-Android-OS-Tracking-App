@@ -55,9 +55,6 @@ class MainActivity : ComponentActivity() {
                         hasUsagePermission = hasUsagePermission,
                         onTrackingToggle = { handleTrackingToggle() },
                         onOpenSettings = { openUsageAccessSettings() },
-                        onExportJson = { /* Placeholder */ },
-                        onExportCsv = { /* Placeholder */ },
-                        onExportDatabase = { /* Placeholder */ },
                         syncStatus = syncStatus,
                         onSetStudyId = { studyId -> handleSetStudyId(studyId) },
                         onClearStudyId = { handleClearStudyId() },
@@ -151,15 +148,5 @@ class MainActivity : ComponentActivity() {
         return hasPermission
     }
     
-    private fun shareFile(uri: Uri, mimeType: String, fileName: String) {
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = mimeType
-            putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "Stanford HAI Study Data Export")
-            putExtra(Intent.EXTRA_TEXT, "Research data export from Stanford HAI Study app")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        startActivity(Intent.createChooser(intent, "Share Data Export"))
-    }
 
 }

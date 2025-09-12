@@ -11,7 +11,7 @@ interface GdpbApiService {
     /**
      * Submit usage data to the backend (for authenticated scientists)
      */
-    @POST("api/usage/submit")
+    @POST("usage/submit")
     suspend fun submitUsageData(
         @Header("Authorization") token: String,
         @Body usageDataList: List<UsageDataRequest>
@@ -20,13 +20,22 @@ interface GdpbApiService {
     /**
      * Submit usage data anonymously (for study participants)
      */
-    @POST("/api/usage/submit-anonymous")
+    @POST("usage/submit-anonymous")
     suspend fun submitUsageDataAnonymous(@Body usageDataList: List<UsageDataRequest>): Response<List<UsageDataRequest>>
+    
+    /**
+     * Submit usage data with Study ID (automatically creates participant record if needed)
+     */
+    @POST("usage/submit-with-study-id")
+    suspend fun submitUsageDataWithStudyId(
+        @Query("studyId") studyId: String,
+        @Body usageDataList: List<UsageDataRequest>
+    ): Response<List<UsageDataRequest>>
     
     /**
      * Get user's own usage data
      */
-    @GET("api/usage/my-data")
+    @GET("usage/my-data")
     suspend fun getMyUsageData(
         @Header("Authorization") token: String,
         @Query("startDate") startDate: String? = null,
@@ -36,14 +45,14 @@ interface GdpbApiService {
     /**
      * Authentication endpoints
      */
-    @POST("api/auth/signin")
+    @POST("auth/signin")
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
     
-    @POST("api/auth/signup")
+    @POST("auth/signup")
     suspend fun register(@Body signupRequest: SignupRequest): Response<MessageResponse>
     
     /**
-     * Health check endpoint
+     * Health check endpoint (absolute path since it's not under /api)
      */
     @GET("/actuator/health")
     suspend fun healthCheck(): Response<HealthResponse>

@@ -21,9 +21,6 @@ fun MainScreen(
     hasUsagePermission: Boolean,
     onTrackingToggle: () -> Unit,
     onOpenSettings: () -> Unit,
-    onExportJson: () -> Unit,
-    onExportCsv: () -> Unit,
-    onExportDatabase: () -> Unit,
     syncStatus: SyncStatus,
     onSetStudyId: (studyId: String) -> Unit,
     onClearStudyId: () -> Unit,
@@ -230,64 +227,6 @@ fun MainScreen(
             }
         }
 
-        // Data Export Section
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
-            ) {
-                Text(
-                    text = "Data Export",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-
-                Text(
-                    text = "Export your research data for analysis:",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Button(
-                        onClick = onExportJson,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.secondary
-                        )
-                    ) {
-                        Text("JSON", fontSize = 12.sp)
-                    }
-
-                    Button(
-                        onClick = onExportCsv,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.secondary
-                        )
-                    ) {
-                        Text("CSV", fontSize = 12.sp)
-                    }
-
-                    Button(
-                        onClick = onExportDatabase,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.secondary
-                        )
-                    ) {
-                        Text("DB", fontSize = 12.sp)
-                    }
-                }
-            }
-        }
 
         // Study Information
         Card(

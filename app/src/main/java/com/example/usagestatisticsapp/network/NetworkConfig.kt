@@ -1,5 +1,6 @@
 package com.example.usagestatisticsapp.network
 
+import com.example.usagestatisticsapp.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -12,8 +13,16 @@ import java.util.concurrent.TimeUnit
 object NetworkConfig {
     
     // Backend URL - configure this for your deployment environment
-    private const val BASE_URL = BuildConfig.API_BASE_URL ?: "https://your-production-api.com/"
-    // Note: Configure API_BASE_URL in build.gradle buildConfigField for different environments
+    private val BASE_URL = if (BuildConfig.DEBUG) {
+        // For development: Use emulator localhost (10.0.2.2) or your machine's IP
+        // Change to your computer's IP address if testing on physical device
+        "http://10.0.2.2:8080/api/"
+    } else {
+        // For production: Use your deployed backend URL
+        "https://your-production-backend.com/api/"
+    }
+    // Note: 10.0.2.2 is the Android emulator's way to access host machine's localhost
+    // For physical device testing, replace with your computer's IP (e.g., "http://192.168.1.100:8080/api/")
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
@@ -48,6 +57,27 @@ class ApiRepository {
     suspend fun submitUsageDataAnonymous(usageDataList: List<UsageDataRequest>): Result<List<UsageDataRequest>> {
         return try {
             val response = apiService.submitUsageDataAnonymous(usageDataList)
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null) {
+                    Result.success(body)
+                } else {
+                    Result.failure(Exception("Response body is null"))
+                }
+            } else {
+                Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * Submit usage data with Study ID (automatically creates participant record if needed)
+     */
+    suspend fun submitUsageDataWithStudyId(studyId: String, usageDataList: List<UsageDataRequest>): Result<List<UsageDataRequest>> {
+        return try {
+            val response = apiService.submitUsageDataWithStudyId(studyId, usageDataList)
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {

@@ -36,7 +36,7 @@ object DataMapper {
         
         return UsageDataRequest(
             tenantId = studyId, // Use Study ID as tenant identifier
-            userId = 1L, // Required for anonymous users
+            userId = null, // Null for participant data - backend will assign participantId
             deviceId = getDeviceId(),
             appPackageName = userUsageStats.appPackageName,
             appName = userUsageStats.appName,
