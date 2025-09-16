@@ -10,6 +10,10 @@ interface UserUsageStatsDao {
     @Query("SELECT * FROM user_usage_stats WHERE userId = :userId ORDER BY startTime DESC")
     fun getUserUsageStats(userId: String): Flow<List<UserUsageStats>>
     
+    // Get unsynced usage statistics (for sync operations) - exclude zero-duration active sessions
+    @Query("SELECT * FROM user_usage_stats WHERE userId = :userId AND isSynced = 0 AND (duration > 0 OR isActive = 0) ORDER BY startTime DESC")
+    fun getUnsyncedUsageStats(userId: String): Flow<List<UserUsageStats>>
+    
     @Query("SELECT * FROM user_usage_stats WHERE userId = :userId AND sessionId = :sessionId ORDER BY startTime DESC")
     fun getUsageStatsBySession(userId: String, sessionId: String): Flow<List<UserUsageStats>>
     
@@ -94,6 +98,18 @@ interface UserUsageStatsDao {
     
     @Query("UPDATE user_usage_stats SET isActive = 0 WHERE userId = :userId AND sessionId = :sessionId AND isActive = 1")
     suspend fun endAllActiveSessionsForUser(userId: String, sessionId: String)
+    
+    // Mark records as synced
+    @Query("UPDATE user_usage_stats SET isSynced = 1 WHERE id IN (:ids)")
+    suspend fun markRecordsAsSynced(ids: List<Long>)
+    
+    // Delete synced records
+    @Query("DELETE FROM user_usage_stats WHERE userId = :userId AND isSynced = 1")
+    suspend fun deleteSyncedRecords(userId: String)
+    
+    // Count synced records for debugging
+    @Query("SELECT COUNT(*) FROM user_usage_stats WHERE userId = :userId AND isSynced = 1")
+    suspend fun getSyncedRecordsCount(userId: String): Int
     
     // Cleanup operations
     @Query("DELETE FROM user_usage_stats WHERE userId = :userId AND startTime < :beforeDate")

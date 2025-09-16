@@ -23,6 +23,9 @@ import com.example.usagestatisticsapp.network.SyncService
 import com.example.usagestatisticsapp.network.SyncStatus
 import com.example.usagestatisticsapp.network.ApiRepository
 import com.example.usagestatisticsapp.ui.MainScreen
+import com.example.usagestatisticsapp.data.AppDatabase
+import com.example.usagestatisticsapp.data.UserUsageStatsRepository
+import com.example.usagestatisticsapp.data.RealTimeSessionTracker
 import com.example.usagestatisticsapp.ui.theme.UsageStatisticsAppTheme
 import kotlinx.coroutines.launch
 
@@ -30,6 +33,7 @@ class MainActivity : ComponentActivity() {
     
     // Initialize SyncService
     private lateinit var syncService: SyncService
+    private lateinit var realTimeTracker: RealTimeSessionTracker
     private var syncStatus by mutableStateOf(SyncStatus(false, null, null, false))
     private var hasUsagePermission by mutableStateOf(false)
     private var isTrackingEnabled by mutableStateOf(false)
@@ -37,8 +41,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Initialize SyncService with a simple repository
-        syncService = SyncService(applicationContext, null) // Simplified for now
+        // Initialize database and repository
+        val database = AppDatabase.getDatabase(applicationContext)
+        val repository = UserUsageStatsRepository(database.userUsageStatsDao())
+        
+        // Initialize SyncService with real repository
+        syncService = SyncService(applicationContext, repository)
+        
+        // Initialize real-time tracker
+        realTimeTracker = RealTimeSessionTracker(repository, applicationContext)
         
         // Initialize sync status and permission
         syncStatus = syncService.getSyncStatus()
@@ -76,13 +87,35 @@ class MainActivity : ComponentActivity() {
                 Toast.makeText(this, "✅ Usage Access permission granted! Data collection can now begin.", Toast.LENGTH_LONG).show()
             }
         }
+        
+        // CRITICAL FIX: Restart tracking if it was enabled but may have been suspended
+        if (isTrackingEnabled && hasUsagePermission && ::realTimeTracker.isInitialized) {
+            android.util.Log.i("MainActivity", "🔄 App resumed - ensuring tracking is active")
+            realTimeTracker.ensureTrackingActive("user_001")
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        // Stop tracking when app is destroyed
+        if (::realTimeTracker.isInitialized) {
+            realTimeTracker.stopTracking()
+        }
     }
     
     private fun handleTrackingToggle() {
         if (hasUsagePermission) {
             isTrackingEnabled = !isTrackingEnabled
-            val status = if (isTrackingEnabled) "started" else "stopped"
-            Toast.makeText(this, "Data tracking $status", Toast.LENGTH_SHORT).show()
+            
+            if (isTrackingEnabled) {
+                // Start real-time tracking
+                realTimeTracker.startTracking("default_user")
+                Toast.makeText(this, "Data tracking started", Toast.LENGTH_SHORT).show()
+            } else {
+                // Stop real-time tracking
+                realTimeTracker.stopTracking()
+                Toast.makeText(this, "Data tracking stopped", Toast.LENGTH_SHORT).show()
+            }
         } else {
             Toast.makeText(this, "Please grant Usage Access permission first", Toast.LENGTH_LONG).show()
         }

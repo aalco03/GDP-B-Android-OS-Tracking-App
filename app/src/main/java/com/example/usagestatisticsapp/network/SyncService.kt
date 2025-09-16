@@ -81,41 +81,43 @@ class SyncService(
                 if (studyId == null) {
                     Result.failure(Exception("Study ID not set. Please enter your Study ID first."))
                 } else if (repository == null) {
-                    // For testing without repository, create dummy data
-                    Log.i(TAG, "Repository not available, creating test data for sync")
-                    val testData = createTestUsageData(studyId)
-                    
-                    val result = apiRepository.submitUsageDataWithStudyId(studyId, listOf(testData))
-                    result.fold(
-                        onSuccess = { 
-                            // Update last sync timestamp
-                            prefs.edit().putLong(PREF_LAST_SYNC, System.currentTimeMillis()).apply()
-                            Log.i(TAG, "Successfully synced test data with Study ID: $studyId")
-                            Result.success(1)
-                        },
-                        onFailure = { error ->
-                            Log.e(TAG, "Sync failed for Study ID: $studyId", error)
-                            Result.failure(error)
-                        }
-                    )
+                    // Repository not available - this should not happen in production
+                    Log.e(TAG, "Repository is null - cannot sync real usage data")
+                    Result.failure(Exception("Repository not initialized - cannot sync usage data"))
                 } else {
                     // Get all usage data from repository with proper coroutine context
                     try {
-                        val allUsageData = repository.getUserUsageStats("default_user").first()
+                        // Get only unsynced records to avoid duplicates
+                        val unsyncedData = repository.getUnsyncedUsageStats("default_user").first()
                         
-                        if (allUsageData.isEmpty()) {
-                            Log.i(TAG, "No usage data to sync")
+                        Log.d(TAG, "🔍 SYNC DEBUG: Repository returned ${unsyncedData.size} unsynced usage records")
+                        unsyncedData.forEach { data ->
+                            Log.d(TAG, "📱 Unsynced: ${data.appName} (${data.appPackageName}) - Duration: ${data.duration}ms (${data.duration/1000.0}s) - ID: ${data.id} - isSynced: ${data.isSynced}")
+                            Log.d(TAG, "   ⏰ Times: Start=${data.startTime}, End=${data.endTime}")
+                            Log.d(TAG, "   🔄 Status: isActive=${data.isActive}, interactionCount=${data.interactionCount}")
+                        }
+                        
+                        if (unsyncedData.isEmpty()) {
+                            Log.i(TAG, "No unsynced usage data found - all data is already synced")
                             Result.success(0)
                         } else {
                             // Convert to API format and submit
-                            val apiData = allUsageData.map { DataMapper.toUsageDataRequest(it, studyId) }
+                            val apiData = unsyncedData.map { DataMapper.toUsageDataRequest(it, studyId) }
                             
                             val result = apiRepository.submitUsageDataWithStudyId(studyId, apiData)
                             result.fold(
                                 onSuccess = { response ->
+                                    // CRITICAL FIX: Mark records as synced first, then delete them to prevent duplicates
+                                    val recordIds = unsyncedData.map { it.id }
+                                    Log.d(TAG, "Marking ${recordIds.size} records as synced: $recordIds")
+                                    repository.markRecordsAsSynced(recordIds)
+                                    
+                                    // Now delete the synced records
+                                    repository.deleteSyncedRecords("default_user")
+                                    
                                     // Update last sync timestamp
                                     prefs.edit().putLong(PREF_LAST_SYNC, System.currentTimeMillis()).apply()
-                                    Log.d(TAG, "Sync successful for Study ID $studyId: ${response.size} records")
+                                    Log.d(TAG, "Sync successful for Study ID $studyId: ${response.size} records marked as synced and deleted from local DB")
                                     Result.success(response.size)
                                 },
                                 onFailure = { error ->
@@ -125,21 +127,8 @@ class SyncService(
                             )
                         }
                     } catch (flowException: Exception) {
-                        Log.w(TAG, "Repository flow error, falling back to test data", flowException)
-                        // Fallback to test data if repository fails
-                        val testData = createTestUsageData(studyId)
-                        val result = apiRepository.submitUsageDataWithStudyId(studyId, listOf(testData))
-                        result.fold(
-                            onSuccess = { 
-                                prefs.edit().putLong(PREF_LAST_SYNC, System.currentTimeMillis()).apply()
-                                Log.i(TAG, "Successfully synced fallback test data with Study ID: $studyId")
-                                Result.success(1)
-                            },
-                            onFailure = { error ->
-                                Log.e(TAG, "Fallback sync failed for Study ID: $studyId", error)
-                                Result.failure(error)
-                            }
-                        )
+                        Log.e(TAG, "Repository flow error - NOT falling back to test data", flowException)
+                        Result.failure(flowException)
                     }
                 }
             } catch (e: Exception) {
@@ -168,8 +157,8 @@ class SyncService(
             tenantId = studyId,
             userId = null, // Null for participant data - backend will assign participantId
             deviceId = "test-device-001",
-            appPackageName = "com.example.test",
-            appName = "Test App",
+            appPackageName = "com.android.chrome",
+            appName = "Chrome",
             category = "PRODUCTIVITY",
             usageTimeMs = 60000L, // 1 minute
             timestamp = timestampArray,

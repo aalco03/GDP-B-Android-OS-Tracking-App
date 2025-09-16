@@ -31,5 +31,6 @@ data class UserUsageStats(
     val appCategory: String? = null, // App category (e.g., "Social", "Productivity")
     val deviceOrientation: String = "portrait", // Device orientation during usage
     val batteryLevel: Int? = null, // Battery level when session started
-    val networkType: String? = null // Network type (WiFi, Mobile, etc.)
+    val networkType: String? = null, // Network type (WiFi, Mobile, etc.)
+    val isSynced: Boolean = false // Whether this record has been synced to backend
 )

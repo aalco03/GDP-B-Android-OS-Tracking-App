@@ -9,6 +9,11 @@ class UserUsageStatsRepository(private val userUsageStatsDao: UserUsageStatsDao)
         return userUsageStatsDao.getUserUsageStats(userId)
     }
     
+    // Get only unsynced records for sync operations
+    fun getUnsyncedUsageStats(userId: String): Flow<List<UserUsageStats>> {
+        return userUsageStatsDao.getUnsyncedUsageStats(userId)
+    }
+    
     fun getUsageStatsBySession(userId: String, sessionId: String): Flow<List<UserUsageStats>> {
         return userUsageStatsDao.getUsageStatsBySession(userId, sessionId)
     }
@@ -67,6 +72,21 @@ class UserUsageStatsRepository(private val userUsageStatsDao: UserUsageStatsDao)
     
     suspend fun endAllActiveSessionsForUser(userId: String, sessionId: String) {
         userUsageStatsDao.endAllActiveSessionsForUser(userId, sessionId)
+    }
+    
+    // Sync operations
+    suspend fun markRecordsAsSynced(ids: List<Long>) {
+        android.util.Log.d("UserUsageStatsRepository", "Marking ${ids.size} records as synced: $ids")
+        userUsageStatsDao.markRecordsAsSynced(ids)
+        android.util.Log.d("UserUsageStatsRepository", "✅ Records marked as synced successfully")
+    }
+    
+    suspend fun deleteSyncedRecords(userId: String) {
+        val countBefore = userUsageStatsDao.getSyncedRecordsCount(userId)
+        android.util.Log.d("UserUsageStatsRepository", "Deleting synced records for user: $userId (found $countBefore synced records)")
+        userUsageStatsDao.deleteSyncedRecords(userId)
+        val countAfter = userUsageStatsDao.getSyncedRecordsCount(userId)
+        android.util.Log.d("UserUsageStatsRepository", "✅ Deleted synced records. Before: $countBefore, After: $countAfter")
     }
     
     // Cleanup operations

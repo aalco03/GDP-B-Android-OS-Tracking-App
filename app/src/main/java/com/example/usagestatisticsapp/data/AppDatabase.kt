@@ -15,7 +15,7 @@ import java.util.Date
         UserUsageStats::class,
         MasterUsageStats::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -35,6 +35,14 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL("DROP TABLE IF EXISTS user_sessions")
             }
         }
+        
+        // Migration from version 5 to 6 - add isSynced column
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                // Add isSynced column to user_usage_stats table
+                database.execSQL("ALTER TABLE user_usage_stats ADD COLUMN isSynced INTEGER NOT NULL DEFAULT 0")
+            }
+        }
 
         fun getDatabase(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -43,8 +51,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "usage_stats_database"
                 )
-                .addMigrations(MIGRATION_4_5)
-                .fallbackToDestructiveMigration() // Destroy and recreate database to avoid migration issues
+                .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
                 .build()
                 INSTANCE = instance
                 instance
