@@ -125,7 +125,19 @@ class MainActivity : ComponentActivity() {
         val result = syncService.setStudyId(studyId)
         result.onSuccess {
             syncStatus = syncService.getSyncStatus()
-            Toast.makeText(this, "Study ID set successfully! You can now start tracking.", Toast.LENGTH_SHORT).show()
+            
+            // Check if demographics have been collected for this Study ID
+            val sharedPrefs = getSharedPreferences("demographics_prefs", Context.MODE_PRIVATE)
+            val demographicsCollected = sharedPrefs.getBoolean("demographics_collected_$studyId", false)
+            
+            if (!demographicsCollected) {
+                // Launch demographics collection activity
+                val intent = Intent(this, DemographicsActivity::class.java)
+                intent.putExtra("STUDY_ID", studyId)
+                startActivity(intent)
+            } else {
+                Toast.makeText(this, "Study ID set successfully! You can now start tracking.", Toast.LENGTH_SHORT).show()
+            }
         }.onFailure { error ->
             Toast.makeText(this, "Failed to set Study ID: ${error.message}", Toast.LENGTH_LONG).show()
         }
@@ -167,18 +179,35 @@ class MainActivity : ComponentActivity() {
     }
     
     private fun hasUsageStatsPermission(): Boolean {
-        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = appOps.checkOpNoThrow(
-            AppOpsManager.OPSTR_GET_USAGE_STATS,
-            android.os.Process.myUid(),
-            packageName
-        )
-        val hasPermission = mode == AppOpsManager.MODE_ALLOWED
-        
-        // Debug logging
-        android.util.Log.d("MainActivity", "Usage stats permission check: mode=$mode, hasPermission=$hasPermission")
-        
-        return hasPermission
+        return try {
+            val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+            
+            // Use the modern unsafeCheckOpNoThrow method for API 29+ or fallback to deprecated method
+            val mode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                appOps.unsafeCheckOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    android.os.Process.myUid(),
+                    packageName
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                appOps.checkOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    android.os.Process.myUid(),
+                    packageName
+                )
+            }
+            
+            val hasPermission = mode == AppOpsManager.MODE_ALLOWED
+            
+            // Debug logging
+            android.util.Log.d("MainActivity", "Usage stats permission check: mode=$mode, hasPermission=$hasPermission")
+            
+            hasPermission
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error checking usage stats permission", e)
+            false
+        }
     }
     
 

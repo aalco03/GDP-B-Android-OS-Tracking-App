@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    android:background="@color/background_color">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Demographics Information"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_text_color"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/studyIdText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Study ID: "
+            android:textSize="16sp"
+            android:textColor="@color/secondary_text_color"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Please provide some demographic information to help with our research. All fields are optional, but providing this information helps us better understand usage patterns."
+            android:textSize="14sp"
+            android:textColor="@color/secondary_text_color"
+            android:layout_marginBottom="32dp"
+            android:textAlignment="center" />
+
+        <!-- City Input -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/cityEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="City (Required)"
+                android:inputType="textCapWords"
+                android:maxLines="1" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Age Range Spinner -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Age Range"
+            android:textSize="16sp"
+            android:textColor="@color/primary_text_color"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/ageRangeSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/spinner_background"
+            android:padding="12dp" />
+
+        <!-- Gender Spinner -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Gender"
+            android:textSize="16sp"
+            android:textColor="@color/primary_text_color"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/genderSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/spinner_background"
+            android:padding="12dp" />
+
+        <!-- Income Level Spinner -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Income Level"
+            android:textSize="16sp"
+            android:textColor="@color/primary_text_color"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/incomeLevelSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="24dp"
+            android:background="@drawable/spinner_background"
+            android:padding="12dp" />
+
+        <!-- Self-Reported Usage Spinner -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Self-Reported Phone Usage"
+            android:textSize="16sp"
+            android:textColor="@color/primary_text_color"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/usageLevelSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="32dp"
+            android:background="@drawable/spinner_background"
+            android:padding="12dp" />
+
+        <!-- Status Text -->
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
+
+        <!-- Progress Bar -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
+
+        <!-- Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="16dp">
+
+            <Button
+                android:id="@+id/skipButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="Skip"
+                android:textColor="@color/secondary_text_color"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+            <Button
+                android:id="@+id/submitButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Submit"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@color/primary_color" />
+
+        </LinearLayout>
+
+        <!-- Privacy Note -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Your demographic information will be used for research purposes only and will be kept confidential."
+            android:textSize="12sp"
+            android:textColor="@color/secondary_text_color"
+            android:layout_marginTop="24dp"
+            android:textAlignment="center"
+            android:alpha="0.8" />
+
+    </LinearLayout>
+
+</ScrollView>

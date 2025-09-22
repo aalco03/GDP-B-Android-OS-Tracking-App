@@ -59,6 +59,12 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     
+    // Material Components for XML layouts
+    implementation("com.google.android.material:material:1.10.0")
+    
+    // AppCompat for Activity support
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    
     // Room Database
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

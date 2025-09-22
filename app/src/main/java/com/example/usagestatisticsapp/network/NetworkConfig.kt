@@ -13,16 +13,53 @@ import java.util.concurrent.TimeUnit
 object NetworkConfig {
     
     // Backend URL - configure this for your deployment environment
-    private val BASE_URL = if (BuildConfig.DEBUG) {
-        // For development: Use emulator localhost (10.0.2.2) or your machine's IP
-        // Change to your computer's IP address if testing on physical device
-        "http://10.0.2.2:8080/api/"
+    val BASE_URL = if (BuildConfig.DEBUG) {
+        // TEMPORARY: Using ngrok tunnel for network connectivity
+        // This bypasses local network routing issues
+        "https://d66c05fa0e82.ngrok-free.app/"
+        
+        // Previous attempts:
+        // "http://172.20.4.49:8080/" // Failed due to EHOSTUNREACH
+        // getLocalServerUrl() // Device detection approach
     } else {
         // For production: Use your deployed backend URL
-        "https://your-production-backend.com/api/"
+        "https://your-production-backend.com/"
     }
-    // Note: 10.0.2.2 is the Android emulator's way to access host machine's localhost
-    // For physical device testing, replace with your computer's IP (e.g., "http://192.168.1.100:8080/api/")
+    
+    /**
+     * Get the appropriate server URL based on device type
+     * Returns emulator URL for emulators, physical device URL for real devices
+     */
+    private fun getLocalServerUrl(): String {
+        // Check if running on emulator by looking for emulator-specific properties
+        val isEmulator = android.os.Build.FINGERPRINT.startsWith("generic") ||
+                android.os.Build.FINGERPRINT.startsWith("unknown") ||
+                android.os.Build.MODEL.contains("google_sdk") ||
+                android.os.Build.MODEL.contains("Emulator") ||
+                android.os.Build.MODEL.contains("Android SDK built for x86") ||
+                android.os.Build.MANUFACTURER.contains("Genymotion") ||
+                (android.os.Build.BRAND.startsWith("generic") && android.os.Build.DEVICE.startsWith("generic"))
+        
+        val url = if (isEmulator) {
+            // Emulator: Use special IP to access host machine
+            "http://10.0.2.2:8080/"
+        } else {
+            // Physical device: Use computer's actual IP address on local network
+            // Update this IP if your computer's IP changes
+            "http://172.20.4.49:8080/"
+        }
+        
+        // Debug logging
+        android.util.Log.d("NetworkConfig", "Device detection - isEmulator: $isEmulator")
+        android.util.Log.d("NetworkConfig", "Build.FINGERPRINT: ${android.os.Build.FINGERPRINT}")
+        android.util.Log.d("NetworkConfig", "Build.MODEL: ${android.os.Build.MODEL}")
+        android.util.Log.d("NetworkConfig", "Build.MANUFACTURER: ${android.os.Build.MANUFACTURER}")
+        android.util.Log.d("NetworkConfig", "Build.BRAND: ${android.os.Build.BRAND}")
+        android.util.Log.d("NetworkConfig", "Build.DEVICE: ${android.os.Build.DEVICE}")
+        android.util.Log.d("NetworkConfig", "Selected base URL: $url")
+        
+        return url
+    }
     
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
@@ -147,18 +184,51 @@ class ApiRepository {
      */
     suspend fun healthCheck(): Result<HealthResponse> {
         return try {
+            android.util.Log.d("ApiRepository", "Starting health check to: ${NetworkConfig.BASE_URL}actuator/health")
             val response = apiService.healthCheck()
+            android.util.Log.d("ApiRepository", "Health check response code: ${response.code()}")
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
+                    android.util.Log.d("ApiRepository", "Health check successful: ${body.status}")
                     Result.success(body)
                 } else {
+                    android.util.Log.e("ApiRepository", "Health check response body is null")
                     Result.failure(Exception("Health check response body is null"))
                 }
             } else {
+                android.util.Log.e("ApiRepository", "Health check failed with code: ${response.code()}")
                 Result.failure(Exception("Health check failed: ${response.code()}"))
             }
         } catch (e: Exception) {
+            android.util.Log.e("ApiRepository", "Health check exception: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * Submit participant demographics
+     */
+    suspend fun submitDemographics(request: DemographicsRequest): Result<DemographicsResponse> {
+        return try {
+            android.util.Log.d("ApiRepository", "Submitting demographics for Study ID: ${request.studyId}")
+            val response = apiService.submitDemographics(request)
+            android.util.Log.d("ApiRepository", "Demographics response code: ${response.code()}")
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null) {
+                    android.util.Log.d("ApiRepository", "Demographics submitted successfully: ${body.message}")
+                    Result.success(body)
+                } else {
+                    android.util.Log.e("ApiRepository", "Demographics response body is null")
+                    Result.failure(Exception("Demographics response body is null"))
+                }
+            } else {
+                android.util.Log.e("ApiRepository", "Demographics submission failed with code: ${response.code()}")
+                Result.failure(Exception("Demographics submission failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("ApiRepository", "Demographics submission exception: ${e.message}", e)
             Result.failure(e)
         }
     }

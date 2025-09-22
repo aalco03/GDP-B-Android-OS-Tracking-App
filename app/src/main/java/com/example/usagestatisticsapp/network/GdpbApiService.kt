@@ -11,7 +11,7 @@ interface GdpbApiService {
     /**
      * Submit usage data to the backend (for authenticated scientists)
      */
-    @POST("usage/submit")
+    @POST("api/usage/submit")
     suspend fun submitUsageData(
         @Header("Authorization") token: String,
         @Body usageDataList: List<UsageDataRequest>
@@ -20,13 +20,13 @@ interface GdpbApiService {
     /**
      * Submit usage data anonymously (for study participants)
      */
-    @POST("usage/submit-anonymous")
+    @POST("api/usage/submit-anonymous")
     suspend fun submitUsageDataAnonymous(@Body usageDataList: List<UsageDataRequest>): Response<List<UsageDataRequest>>
     
     /**
      * Submit usage data with Study ID (automatically creates participant record if needed)
      */
-    @POST("usage/submit-with-study-id")
+    @POST("api/usage/submit-with-study-id")
     suspend fun submitUsageDataWithStudyId(
         @Query("studyId") studyId: String,
         @Body usageDataList: List<UsageDataRequest>
@@ -35,7 +35,7 @@ interface GdpbApiService {
     /**
      * Get user's own usage data
      */
-    @GET("usage/my-data")
+    @GET("api/usage/my-data")
     suspend fun getMyUsageData(
         @Header("Authorization") token: String,
         @Query("startDate") startDate: String? = null,
@@ -45,17 +45,23 @@ interface GdpbApiService {
     /**
      * Authentication endpoints
      */
-    @POST("auth/signin")
+    @POST("api/auth/signin")
     suspend fun login(@Body loginRequest: LoginRequest): Response<LoginResponse>
     
-    @POST("auth/signup")
+    @POST("api/auth/signup")
     suspend fun register(@Body signupRequest: SignupRequest): Response<MessageResponse>
     
     /**
      * Health check endpoint (absolute path since it's not under /api)
      */
-    @GET("/actuator/health")
+    @GET("actuator/health")
     suspend fun healthCheck(): Response<HealthResponse>
+    
+    /**
+     * Submit participant demographics (anonymous - no authentication required)
+     */
+    @POST("api/usage/update-demographics-anonymous")
+    suspend fun submitDemographics(@Body request: DemographicsRequest): Response<DemographicsResponse>
 }
 
 /**
